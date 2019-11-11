@@ -1,0 +1,29 @@
+// XOL16 assembler test
+
+// This files demoes support for inlining and goto
+// call/return functionality TBD later
+
+.segment incr_a
+psh // store current value of a
+ldc 1 // load '1' in a
+cpb // copy that 1 to b
+pop // get back the old value of a
+add // add those two together
+
+.segment load57
+ldc 57
+.goto ret57 // no 'return' yet, we jump back to a marker
+
+.segment main
+ldc 0 // load zero in A
+out // A = 0
+.inline incr_a
+out // A = 1
+.inline incr_a
+out // A = 2
+
+.goto load57
+@ret57 // marker for returning to
+out
+
+.die // outputs -1 and stops the emulator
