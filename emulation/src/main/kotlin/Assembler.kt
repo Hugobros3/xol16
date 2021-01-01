@@ -36,8 +36,8 @@ private fun translate(segment: Segment, segments: Map<String, Segment>, markers:
 
                 val target_address_absolute = target_segment?.position?.toInt() ?: target_marker?.position?.toInt() ?: 0
 
-                val target_address_real = ((target_address_absolute - jmp_predicted_location) and 0xFFFF).toUShort()
-                println("target: $target_address_real bytes ahead")
+                val target_address_real = ((target_address_absolute/* - jmp_predicted_location*/) and 0xFFFF).toUShort()
+                println("target $target_name: $target_address_real bytes ahead")
                 val target_address_lower = (target_address_real and 0x00FFu).toUByte()
                 val target_address_upper = (target_address_real and 0xFF00u).toInt().shr(8).toUByte()
 
@@ -162,7 +162,7 @@ fun assemble(string: String): List<UByte> {
     for(segment in segmentsInOrder) {
         val translated = translate(segment, segments, markers)
         for(relMarker in translated.markersRelative) {
-            markers.put(relMarker.key, Marker(relMarker.key, (segment.position!!.toUInt() + relMarker.value.toUInt()).toUShort()))
+            markers[relMarker.key] = Marker(relMarker.key, (segment.position!!.toUInt() + relMarker.value.toUInt()).toUShort())
         }
     }
 

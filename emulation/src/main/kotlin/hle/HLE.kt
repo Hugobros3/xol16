@@ -1,12 +1,12 @@
 package hle
 
+import CPU
 import Instructions
+import Machine
 import java.lang.Exception
 
 @kotlin.ExperimentalUnsignedTypes
-class Xol16ComputerHLE(val rom: UByteArray) {
-    val ram = UByteArray(256)
-
+class HLE_CPU(machine: Machine) : CPU(machine) {
     var pc: UShort = 0x8000u
 
     var a: UByte = 0u
@@ -16,10 +16,8 @@ class Xol16ComputerHLE(val rom: UByteArray) {
 
     var stack: MutableList<UByte> = mutableListOf()
 
-    var stop = false
-
-    fun clock() {
-        val instructionOpcode = memRead(pc)
+    override fun clock() {
+        val instructionOpcode = machine.memRead(pc)
         //println("exec: $instructionOpcode $this")
         pc = pc.inc()
 
@@ -47,7 +45,7 @@ class Xol16ComputerHLE(val rom: UByteArray) {
             Instructions.JMP -> {
                 pc = (pc + d).toUShort()
             }
-            Instructions.JMF -> {
+            Instructions.IFC -> {
                 if (c) {
                     pc = (pc + d).toUShort()
                 }
@@ -63,15 +61,15 @@ class Xol16ComputerHLE(val rom: UByteArray) {
                 d = (a.toInt().shl(8).toUShort()) or (d and 0x00FFu)
             }
             Instructions.LDC -> {
-                val extraData = memRead(pc)
+                val extraData = machine.memRead(pc)
                 pc = pc.inc()
                 a = extraData
             }
             Instructions.GET -> {
-                a = memRead(d)
+                a = machine.memRead(d)
             }
             Instructions.PUT -> {
-                memWrite(d, a)
+                machine.memWrite(d, a)
             }
             Instructions.PSH -> {
                 stack.add(a)
@@ -83,33 +81,16 @@ class Xol16ComputerHLE(val rom: UByteArray) {
                 stack.removeAt(stack.size - 1)
             }
             Instructions.INP -> {
-                val line = readLine() ?: "0"
-                val nbr = line.toIntOrNull() ?: 0
-                a = (nbr and 0xFF).toUByte()
+                a = machine.input()
             }
             Instructions.OUT -> {
-                if (a == 0xFFu.toUByte()) {
-                    stop = true
-                } else {
-                    println("OUTPUT: $a (${a.toByte().toChar()})")
-                }
+                machine.output(a)
             }
             else -> throw Exception("Illegal instruction")
         }
     }
 
-    fun memRead(address: UShort): UByte = when (address) {
-        in 0u..0xFFu -> ram[address.toInt()]
-        in 0x8000u..0xFFFFu -> rom[(address and 0x7FFFu).toInt() % rom.size]
-        else -> 0u
-    }
-
-    fun memWrite(address: UShort, data: UByte) = when (address) {
-        in 0u..0xFFu -> ram[address.toInt()] = data
-        else -> Unit
-    }
-
     override fun toString(): String {
-        return "Xol16ComputerHLE(pc=$pc, a=$a, b=$b, c=$c, d=$d stack_size:${stack.size})"
+        return "HLE_CPU(pc=$pc, a=$a, b=$b, c=$c, d=$d stack_size:${stack.size})"
     }
 }

@@ -1,4 +1,4 @@
-import hle.Xol16ComputerHLE
+import hle.HLE_CPU
 import java.io.File
 
 @ExperimentalUnsignedTypes
@@ -20,10 +20,12 @@ fun main(args: Array<String>) {
         args[0] == "run-hle" -> {
             val file = File(args[1])
             val assembled = assemble(file.readText()).toUByteArray()
-            val machine = Xol16ComputerHLE(assembled)
+            val machine = StoppableMachine(assembled)
+
+            val cpu = HLE_CPU(machine)
 
             while(!machine.stop) {
-                machine.clock()
+                cpu.clock()
             }
         }
     }

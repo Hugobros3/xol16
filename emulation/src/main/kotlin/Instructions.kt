@@ -6,7 +6,7 @@ enum class Instructions(val opcode: Int, val immediateDataBytes: Int) {
     EQU(0x3, 0),
 
     JMP(0x4, 0),
-    JMF(0x5, 0),
+    IFC(0x5, 0),
 
     CPB(0x8, 0),
     CPL(0xA, 0),
