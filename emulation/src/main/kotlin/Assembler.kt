@@ -32,7 +32,7 @@ private fun translate(segment: Segment, segments: Map<String, Segment>, markers:
                     valid = false
                 }
 
-                val jmp_predicted_location = (segment.position?.toInt() ?: 0) + target.size + 4 + 1
+                val jmp_predicted_location = (segment.position?.toInt() ?: 0) + target.size + 9 + 1
 
                 val target_address_absolute = target_segment?.position?.toInt() ?: target_marker?.position?.toInt() ?: 0
 
@@ -41,12 +41,17 @@ private fun translate(segment: Segment, segments: Map<String, Segment>, markers:
                 val target_address_lower = (target_address_real and 0x00FFu).toUByte()
                 val target_address_upper = (target_address_real and 0xFF00u).toInt().shr(8).toUByte()
 
-                target.add(Instructions.LDL.opcode)
+                target.add(Instructions.PSH.opcode.toUByte())
+                target.add(Instructions.LDC.opcode.toUByte())
                 target.add(target_address_lower)
-                target.add(Instructions.LDH.opcode)
-                target.add(target_address_upper) // +4
+                target.add(Instructions.CPL.opcode.toUByte())
+                target.add(Instructions.LDC.opcode.toUByte())
+                target.add(target_address_upper)
+                target.add(Instructions.CPH.opcode.toUByte())
+                target.add(Instructions.SEE.opcode.toUByte())
+                target.add(Instructions.POP.opcode.toUByte()) // +9
 
-                target.add(Instructions.JMP.opcode) // +1
+                target.add(Instructions.JMP.opcode.toUByte()) // +1
             }
             token == ".inline" -> {
                 val target_segment_name = tokenStream.next()
@@ -65,9 +70,9 @@ private fun translate(segment: Segment, segments: Map<String, Segment>, markers:
             }
             token == ".die" -> {
                 // Outputting -1 kills the interpreter
-                target.add(Instructions.LDC.opcode)
+                target.add(Instructions.LDC.opcode.toUByte())
                 target.add(0xFFu)
-                target.add(Instructions.OUT.opcode)
+                target.add(Instructions.OUT.opcode.toUByte())
             }
             token.startsWith("@") -> {
                 val markerName = token.removePrefix("@")
@@ -76,8 +81,8 @@ private fun translate(segment: Segment, segments: Map<String, Segment>, markers:
             else -> {
                 val instruction =
                     Instructions.values().find { it.mnemonic == token } ?: throw Exception("Unknown instruction: $token")
-                target.add(instruction.opcode)
-                if (instruction.hasImmediateData == 1) {
+                target.add(instruction.opcode.toUByte())
+                if (instruction.immediateDataBytes == 1) {
                     val dataToken = tokenStream.next()
                     val data = if (dataToken.startsWith("0x")) {
                         java.lang.Long.parseLong(dataToken.removePrefix("0x"), 16)

@@ -1,6 +1,7 @@
 package hle
 
 import Instructions
+import java.lang.Exception
 
 @kotlin.ExperimentalUnsignedTypes
 class Xol16ComputerHLE(val rom: UByteArray) {
@@ -22,28 +23,27 @@ class Xol16ComputerHLE(val rom: UByteArray) {
         //println("exec: $instructionOpcode $this")
         pc = pc.inc()
 
-        when (Instructions.values()[instructionOpcode.toInt()]) {
+        val instruction = Instructions.values().find { it.opcode.toUByte() == instructionOpcode } ?: throw Exception("Invalid opcode $instructionOpcode")
+        when (instruction) {
             Instructions.ADD -> {
-                val rslt = a + b
-                a = (rslt).toUByte()
-                c = rslt > 255u
+                val result = a + b
+                a = (result).toUByte()
+                c = result > 255u
             }
             Instructions.NOR -> {
                 a = (a.or(b)).inv()
             }
-            Instructions.CPB -> {
-                b = a
-            }
             Instructions.CMP -> {
-                val equal = a == b
-                c = equal
-                a = if (equal) 1u else 0u
-            }
-            Instructions.CMS -> {
                 val inf = a < b
                 c = inf
                 a = if (inf) 1u else 0u
             }
+            Instructions.EQU -> {
+                val equal = a == b
+                c = equal
+                a = if (equal) 1u else 0u
+            }
+
             Instructions.JMP -> {
                 pc = (pc + d).toUShort()
             }
@@ -52,21 +52,15 @@ class Xol16ComputerHLE(val rom: UByteArray) {
                     pc = (pc + d).toUShort()
                 }
             }
+
+            Instructions.CPB -> {
+                b = a
+            }
             Instructions.CPL -> {
                 d = (d and 0xFF00u) or a.toUShort()
             }
             Instructions.CPH -> {
                 d = (a.toInt().shl(8).toUShort()) or (d and 0x00FFu)
-            }
-            Instructions.LDL -> {
-                val extraData = memRead(pc)
-                pc = pc.inc()
-                d = (d and 0xFF00u) or extraData.toUShort()
-            }
-            Instructions.LDH -> {
-                val extraData = memRead(pc)
-                pc = pc.inc()
-                d = (extraData.toInt().shl(8).toUShort()) or (d and 0x00FFu)
             }
             Instructions.LDC -> {
                 val extraData = memRead(pc)
@@ -82,11 +76,16 @@ class Xol16ComputerHLE(val rom: UByteArray) {
             Instructions.PSH -> {
                 stack.add(a)
             }
-            Instructions.PEK -> {
+            Instructions.SEE -> {
                 a = stack.last()
             }
             Instructions.POP -> {
-                a = stack.removeAt(stack.size - 1)
+                stack.removeAt(stack.size - 1)
+            }
+            Instructions.INP -> {
+                val line = readLine() ?: "0"
+                val nbr = line.toIntOrNull() ?: 0
+                a = (nbr and 0xFF).toUByte()
             }
             Instructions.OUT -> {
                 if (a == 0xFFu.toUByte()) {

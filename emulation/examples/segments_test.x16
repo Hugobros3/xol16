@@ -7,6 +7,7 @@
 psh // store current value of a
 ldc 1 // load '1' in a
 cpb // copy that 1 to b
+see
 pop // get back the old value of a
 add // add those two together
 

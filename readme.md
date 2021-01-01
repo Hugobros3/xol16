@@ -37,8 +37,6 @@ Registers:
 | jmc | if(c == true) pc = d | Conditional jump |
 | cpl | d[7..0] = a | Copy A to lower 8 bits of delta register |
 | cph | d[15..8] = a | Copy A to upper 8 bits of delta register |
-| ldl | d[7..0] = \*(pc++) | Loads constant into lower 8 bits of delta register |
-| ldh | d[15..8] = \*(pc++) | Loads constant into upper 8 bits of delta register |
 | ldc | a = \*(pc++) | Load from constant |
 | get | a = *d | Load from address |
 | put | *d = a | Store to address |
@@ -48,6 +46,9 @@ Registers:
 | out | print(a) | Sends the content of A to the standard output |
 
 <!--
+| ldl | d[7..0] = \*(pc++) | Loads constant into lower 8 bits of delta register |
+| ldh | d[15..8] = \*(pc++) | Loads constant into upper 8 bits of delta register |
+
 | drf | d = *d | D is dereferenced and updates it's lower 8 bits |
 | off | d += *(pc++) as u16 | Offset D by a constant, sign-extended to 16b | -->
 
